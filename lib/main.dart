@@ -38,6 +38,17 @@ class MyApp extends ConsumerWidget {
           }
         },
       ),
+      theme: ThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        )
+      ),
       debugShowCheckedModeBanner: false,
     );
   }

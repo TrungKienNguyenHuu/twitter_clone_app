@@ -1,7 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:twitter_clone_app/models/tweet.dart';
+import 'package:twitter_clone_app/pages/create.dart';
 import 'package:twitter_clone_app/pages/settings.dart';
+import 'package:twitter_clone_app/providers/tweet_provider.dart';
 import 'package:twitter_clone_app/providers/user_provider.dart';
 
 class Home extends ConsumerWidget {
@@ -14,6 +17,13 @@ class Home extends ConsumerWidget {
     LocalUser currentUser = ref.watch(userProvider);
     return Scaffold(
       appBar: AppBar(
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(4.0),
+          child: Container(
+            color: Colors.grey,
+            height: 1.0,
+          ),
+        ),
         leading: Builder(
           builder: (context) {
             return GestureDetector(
@@ -29,20 +39,40 @@ class Home extends ConsumerWidget {
           }
         ),
         backgroundColor: Colors.blue,
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-          ),
-        ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Text(currentUser.user.email),
-          Text(currentUser.user.name),
-        ],
+      body: ref.watch(feddProvider).when(
+        data: (List<Tweet> tweets){
+          return ListView.separated(
+            separatorBuilder: (context, index) => const Divider(
+              color: Colors.black,
+            ),
+            itemCount: tweets.length,
+            itemBuilder: (context, count){
+              return ListTile(
+                leading: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: NetworkImage(tweets[count].profilePicture),
+                ),
+                title: Text(tweets[count].name, 
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(tweets[count].content, 
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
+                ),
+              );
+            }
+          );
+        },
+        error: (error, stackTrace) => Center(
+          child: Text("Error: $error"),
+        ),
+
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
       ),
+      
       drawer: Drawer(child: Column(
         children: [
           Padding(
@@ -75,6 +105,15 @@ class Home extends ConsumerWidget {
           ),
         ],
       )),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: (){
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => CreateTweet(),
+          ));
+        },
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
