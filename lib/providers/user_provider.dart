@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:twitter_clone_app/models/user.dart';
 
@@ -31,6 +34,7 @@ class UserNotifier extends StateNotifier<LocalUser> {
   UserNotifier(): super(LocalUser(id: "error", user: FirebaseUser(email: "error", name: "error", profilePictureUrl: "error")));
 
   final FirebaseFirestore _fireStore = FirebaseFirestore.instance;
+  final FirebaseStorage _fireStorage = FirebaseStorage.instance;
 
   Future<void> login(String email) async {
     QuerySnapshot response = await _fireStore.collection('users')
@@ -49,6 +53,24 @@ class UserNotifier extends StateNotifier<LocalUser> {
     );
   DocumentSnapshot snapshot = await response.get();
     state = LocalUser(id: response.id, user: FirebaseUser.fromMap(snapshot.data() as Map<String, dynamic>));
+  }
+
+  Future<void> updateUserName(String name) async{
+    await _fireStore.collection("users").doc(state.id).update({
+      "name": name,
+    });
+    state = state.copyWith(user: state.user.copyWith(name: name));
+  }
+
+  Future<void> updateUserProfilePicture(File image) async{
+    Reference ref = _fireStorage.ref().child("users").child(state.id);
+    TaskSnapshot snapshot = await ref.putFile(image);
+    String imageUrl = await snapshot.ref.getDownloadURL();
+    ref.putFile(image);
+    await _fireStore.collection("users").doc(state.id).update({
+      "profilePictureUrl": imageUrl,
+    });
+    state = state.copyWith(user: state.user.copyWith(profilePictureUrl: imageUrl));
   }
 
   void logout() {
